@@ -1,0 +1,428 @@
+[
+	{
+		"inputs": [],
+		"name": "createRoom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [],
+		"name": "GameOver",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [],
+		"name": "GameStarted",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "hardDropPiece",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "joinRoom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newScore",
+				"type": "uint256"
+			}
+		],
+		"name": "LineCleared",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "int8",
+				"name": "dx",
+				"type": "int8"
+			},
+			{
+				"internalType": "int8",
+				"name": "dy",
+				"type": "int8"
+			}
+		],
+		"name": "movePiece",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "player",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "pieceType",
+				"type": "uint8"
+			}
+		],
+		"name": "NextPieceSelected",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "x",
+				"type": "uint8"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "y",
+				"type": "uint8"
+			}
+		],
+		"name": "PieceMoved",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "rotation",
+				"type": "uint8"
+			}
+		],
+		"name": "PieceRotated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "PlayerJoined",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "rotatePiece",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint8",
+				"name": "pieceType",
+				"type": "uint8"
+			}
+		],
+		"name": "selectNextPiece",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "startGame",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "updateGame",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getActiveRooms",
+		"outputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "",
+				"type": "uint256[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "getBoard",
+		"outputs": [
+			{
+				"internalType": "uint8[8][8]",
+				"name": "",
+				"type": "uint8[8][8]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "getCurrentPiece",
+		"outputs": [
+			{
+				"internalType": "uint8[4][4]",
+				"name": "",
+				"type": "uint8[4][4]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "getEnemyPiece",
+		"outputs": [
+			{
+				"internalType": "uint8[4][4]",
+				"name": "piece",
+				"type": "uint8[4][4]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "getEnemyPosition",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "x",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint8",
+				"name": "y",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "getListPlayer",
+		"outputs": [
+			{
+				"internalType": "address[]",
+				"name": "",
+				"type": "address[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "getLocation",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "getScore",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "nextRoomId",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "rooms",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "isActive",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
