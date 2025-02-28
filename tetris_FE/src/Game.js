@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from "./GameContract";
 
-const wsProvider = new ethers.WebSocketProvider("wss://bsc-testnet.publicnode.com");
+const wsProvider = new ethers.WebSocketProvider(
+  "wss://bsc-testnet.publicnode.com"
+);
 
 const Game = () => {
   const [account, setAccount] = useState(null);
@@ -298,12 +300,22 @@ const Game = () => {
   };
 
   useEffect(() => {
-    if (!contract) return;
+    if (!contract || roomId == null) return;
 
-    const onLineCleared = async (newScore) => {
-      const [me, enemy] = await contract.getScore(roomId);
+    const onLineCleared = async () => {
+      try {
+        const result = await contract.getScore(roomId);
+        if (!result) {
+          console.error("🚨 getScore returned null or undefined");
+          return;
+        }
 
-      setScore({ me: Number(me), enemy: Number(enemy) });
+        const [me, enemy] = result;
+        await fetchScore(roomId);
+        setScore({ me: Number(me), enemy: Number(enemy) });
+      } catch (error) {
+        console.error("❌ Error fetching score:", error);
+      }
     };
 
     contract.on("LineCleared", onLineCleared);
@@ -311,7 +323,7 @@ const Game = () => {
     return () => {
       contract.off("LineCleared", onLineCleared);
     };
-  }, []);
+  }, [contract, roomId]);
 
   useEffect(() => {
     if (!contract) return;
@@ -358,6 +370,7 @@ const Game = () => {
         });
 
         setBoard(newBoard);
+        await fetchScore(roomId);
       } catch (error) {
         console.error("Lỗi lấy board:", error);
       }
@@ -369,7 +382,7 @@ const Game = () => {
     return () => {
       contract.off("PieceRotated", onPieceRotated);
     };
-  }, []);
+  }, [contract]);
 
   useEffect(() => {
     if (!contract || !roomId) return;
@@ -401,7 +414,7 @@ const Game = () => {
     return () => {
       contract.off("PieceMoved", onPieceMoved);
     };
-  }, []);
+  }, [contract]);
 
   useEffect(() => {
     if (contract) {
@@ -410,14 +423,60 @@ const Game = () => {
         fetchPlayers(roomId);
       });
 
-      contract.on("GameStarted", () => {
+      const GameStart = async () => {
         console.log("Game Started!");
-        fetchBoard();
+        try {
+          const PieceShape = await contract.getCurrentPiece(roomId);
+          const EnermyPieceShape = await contract.getEnemyPiece(roomId);
+          const [x, y, ex, ey] = await contract.getLocation(roomId);
+          await setPiecePosition({
+            x: Number(x),
+            y: Number(y),
+            ex: Number(ex),
+            ey: Number(ey),
+          });
+          const boardData = await contract.getBoard(roomId);
+          let newBoard = boardData.map((row) =>
+            row.map((cell) => (cell === 0n ? "⬜" : cell === 1n ? "⬛" : "🔴"))
+          );
+          // Hiển thị quân cờ theo hình dạng
+          PieceShape.forEach((row, dy) => {
+            row.forEach((cell, dx) => {
+              if (cell === 1n) {
+                // Ô thuộc quân cờ
+                const x = piecePosition.x + dx;
+                const y = piecePosition.y + dy;
+                if (newBoard[y] && newBoard[y][x] !== undefined) {
+                  newBoard[y][x] = "🟦"; // Quân cờ sẽ hiển thị màu xanh
+                }
+              }
+            });
+          });
+
+          EnermyPieceShape.forEach((row, dy) => {
+            row.forEach((cell, dx) => {
+              if (cell === 1n) {
+                const x = piecePosition.ex + dx;
+                const y = piecePosition.ey + dy;
+                if (newBoard[y] && newBoard[y][x] !== undefined) {
+                  newBoard[y][x] = "🟥"; // Đối thủ: đỏ
+                }
+              }
+            });
+          });
+
+          setBoard(newBoard);
+        } catch (error) {
+          console.error("Lỗi lấy board:", error);
+        }
         setGameStarted(true);
-      });
+      };
+
+      contract.on("GameStarted", GameStart);
 
       contract.on("GameOver", () => {
         console.log("Game Over!");
+        alert("Game Over!");
         setGameStarted(false);
       });
 
@@ -427,7 +486,7 @@ const Game = () => {
         }
       };
     }
-  }, []);
+  }, [contract]);
 
   useEffect(() => {
     if (contract) {
