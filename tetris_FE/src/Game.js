@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { debounce } from "lodash";
 import { ethers } from "ethers";
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from "./GameContract";
 
-const wsProvider = new ethers.WebSocketProvider(
-  "wss://bsc-testnet.publicnode.com"
-);
-
+const WSS_URL =
+  "wss://bsc-testnet.core.chainstack.com/4822a4a82ada9ebff2a817f4f77e0310";
+const RPC_URL = "https://rpc.buildbear.io/sad-doctorstrange-ea8ef310";
 const Game = () => {
+  const timeoutRef = useRef(null);
+  const [PRIVATE_KEY, setPriveteKey] = useState("");
+  const [tempRoomId, setTempRoomId] = useState("");
   const [account, setAccount] = useState(null);
   const [contract, setContract] = useState(null);
   const [nextRoomId, setNextRoomId] = useState(null);
@@ -53,23 +56,23 @@ const Game = () => {
 
   // Kết nối MetaMask
   const connectWallet = async () => {
-    if (window.ethereum) {
-      try {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
-        setAccount(await signer.getAddress());
+    try {
+      const provider = new ethers.WebSocketProvider(WSS_URL);
 
-        const contractInstance = new ethers.Contract(
-          CONTRACT_ADDRESS,
-          CONTRACT_ABI,
-          signer
-        );
-        setContract(contractInstance);
-      } catch (error) {
-        console.error("Lỗi kết nối ví:", error);
-      }
-    } else {
-      alert("Vui lòng cài đặt MetaMask!");
+      // Tạo Wallet từ Private Key
+      const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+      setAccount(wallet.address);
+
+      const contractInstance = new ethers.Contract(
+        CONTRACT_ADDRESS,
+        CONTRACT_ABI,
+        wallet
+      );
+      setContract(contractInstance);
+
+      console.log("Kết nối thành công! Địa chỉ ví:", wallet.address);
+    } catch (error) {
+      console.error("Lỗi kết nối ví:", error);
     }
   };
 
@@ -252,8 +255,7 @@ const Game = () => {
       try {
         const tx = await contract.updateGame(roomId);
         await tx.wait();
-        await fetchPiecePosition();
-        fetchBoard();
+        console.log("Updatedá");
       } catch (error) {
         console.error("Lỗi khi tham gia phòng:", error);
       }
@@ -300,7 +302,10 @@ const Game = () => {
   };
 
   useEffect(() => {
-    if (!contract || roomId == null) return;
+    if (!contract || roomId == null) {
+      console.error("Contract or roomId is not defined");
+      return;
+    }
 
     const onLineCleared = async () => {
       try {
@@ -318,10 +323,12 @@ const Game = () => {
       }
     };
 
+    contract.removeAllListeners("LineCleared");
+
     contract.on("LineCleared", onLineCleared);
 
     return () => {
-      contract.off("LineCleared", onLineCleared);
+      contract.removeListener("LineCleared", onLineCleared);
     };
   }, [contract, roomId]);
 
@@ -329,61 +336,19 @@ const Game = () => {
     if (!contract) return;
 
     const onPieceRotated = async (rotation) => {
-      try {
-        const PieceShape = await contract.getCurrentPiece(roomId);
-        const EnermyPieceShape = await contract.getEnemyPiece(roomId);
-        const [x, y, ex, ey] = await contract.getLocation(roomId);
-        await setPiecePosition({
-          x: Number(x),
-          y: Number(y),
-          ex: Number(ex),
-          ey: Number(ey),
-        });
-        const boardData = await contract.getBoard(roomId);
-        let newBoard = boardData.map((row) =>
-          row.map((cell) => (cell === 0n ? "⬜" : cell === 1n ? "⬛" : "🔴"))
-        );
-        // Hiển thị quân cờ theo hình dạng
-        PieceShape.forEach((row, dy) => {
-          row.forEach((cell, dx) => {
-            if (cell === 1n) {
-              // Ô thuộc quân cờ
-              const x = piecePosition.x + dx;
-              const y = piecePosition.y + dy;
-              if (newBoard[y] && newBoard[y][x] !== undefined) {
-                newBoard[y][x] = "🟦"; // Quân cờ sẽ hiển thị màu xanh
-              }
-            }
-          });
-        });
-
-        EnermyPieceShape.forEach((row, dy) => {
-          row.forEach((cell, dx) => {
-            if (cell === 1n) {
-              const x = piecePosition.ex + dx;
-              const y = piecePosition.ey + dy;
-              if (newBoard[y] && newBoard[y][x] !== undefined) {
-                newBoard[y][x] = "🟥"; // Đối thủ: đỏ
-              }
-            }
-          });
-        });
-
-        setBoard(newBoard);
-        await fetchScore(roomId);
-      } catch (error) {
-        console.error("Lỗi lấy board:", error);
-      }
+        await fetchBoard();
       console.log(`♻️ Piece rotated! New rotation: ${rotation}`);
     };
+    contract.removeAllListeners("PieceRotated");
 
     contract.on("PieceRotated", onPieceRotated);
 
     return () => {
-      contract.off("PieceRotated", onPieceRotated);
+      contract.removeListener("PieceRotated", onPieceRotated);
     };
   }, [contract]);
 
+  // Move event
   useEffect(() => {
     if (!contract || !roomId) return;
 
@@ -401,8 +366,7 @@ const Game = () => {
         console.log(
           `Updated positions - Me: (${myX}, ${myY}), Enemy: (${enemyX}, ${enemyY})`
         );
-
-        fetchBoard();
+        //  fetchBoard();
       } catch (error) {
         console.error("Lỗi khi cập nhật vị trí:", error);
       }
@@ -410,82 +374,45 @@ const Game = () => {
 
     contract.on("PieceMoved", onPieceMoved);
 
-    // Cleanup khi component unmount
     return () => {
       contract.off("PieceMoved", onPieceMoved);
     };
   }, [contract]);
 
   useEffect(() => {
-    if (contract) {
-      contract.on("PlayerJoined", (roomId) => {
-        console.log("Player Joined!");
-        fetchPlayers(roomId);
-      });
+    if (!contract) return;
 
-      const GameStart = async () => {
-        console.log("Game Started!");
-        try {
-          const PieceShape = await contract.getCurrentPiece(roomId);
-          const EnermyPieceShape = await contract.getEnemyPiece(roomId);
-          const [x, y, ex, ey] = await contract.getLocation(roomId);
-          await setPiecePosition({
-            x: Number(x),
-            y: Number(y),
-            ex: Number(ex),
-            ey: Number(ey),
-          });
-          const boardData = await contract.getBoard(roomId);
-          let newBoard = boardData.map((row) =>
-            row.map((cell) => (cell === 0n ? "⬜" : cell === 1n ? "⬛" : "🔴"))
-          );
-          // Hiển thị quân cờ theo hình dạng
-          PieceShape.forEach((row, dy) => {
-            row.forEach((cell, dx) => {
-              if (cell === 1n) {
-                // Ô thuộc quân cờ
-                const x = piecePosition.x + dx;
-                const y = piecePosition.y + dy;
-                if (newBoard[y] && newBoard[y][x] !== undefined) {
-                  newBoard[y][x] = "🟦"; // Quân cờ sẽ hiển thị màu xanh
-                }
-              }
-            });
-          });
+    const handlePlayerJoined = async (roomId) => {
+      console.log("Player Joined!", roomId);
+      await fetchPlayers(roomId);
+    };
 
-          EnermyPieceShape.forEach((row, dy) => {
-            row.forEach((cell, dx) => {
-              if (cell === 1n) {
-                const x = piecePosition.ex + dx;
-                const y = piecePosition.ey + dy;
-                if (newBoard[y] && newBoard[y][x] !== undefined) {
-                  newBoard[y][x] = "🟥"; // Đối thủ: đỏ
-                }
-              }
-            });
-          });
+    const handleGameStart = async () => {
+      console.log("Game Started!");
+      await fetchBoard();
+      setGameStarted(true);
+    };
 
-          setBoard(newBoard);
-        } catch (error) {
-          console.error("Lỗi lấy board:", error);
-        }
-        setGameStarted(true);
-      };
+    const handleGameOver = () => {
+      console.log("Game Over!");
+      alert("Game Over!");
+      setGameStarted(false);
+    };
 
-      contract.on("GameStarted", GameStart);
+    // 🔹 Xóa listener cũ trước khi thêm mới để tránh chồng chéo sự kiện
+    contract.removeAllListeners("PlayerJoined");
+    contract.removeAllListeners("GameStarted");
+    contract.removeAllListeners("GameOver");
 
-      contract.on("GameOver", () => {
-        console.log("Game Over!");
-        alert("Game Over!");
-        setGameStarted(false);
-      });
+    contract.on("PlayerJoined", handlePlayerJoined);
+    contract.on("GameStarted", handleGameStart);
+    contract.on("GameOver", handleGameOver);
 
-      return () => {
-        if (contract) {
-          contract.removeAllListeners(); // Chỉ gọi nếu contract hợp lệ
-        }
-      };
-    }
+    return () => {
+      contract.removeListener("PlayerJoined", handlePlayerJoined);
+      contract.removeListener("GameStarted", handleGameStart);
+      contract.removeListener("GameOver", handleGameOver);
+    };
   }, [contract]);
 
   useEffect(() => {
@@ -494,28 +421,82 @@ const Game = () => {
       fetchNextRoomId();
       fetchPieceShape();
       fetchPlayers();
+      console.log("adsf");
     }
   }, [contract]);
 
   useEffect(() => {
-    if (piecePosition) {
-      fetchBoard();
-    }
-  }, [piecePosition, pieceShape]);
-  // useEffect(() => {
-  //   if (contract && gameStarted) {
-  //     const interval = setInterval(() => {
-  //       fetchUpdate();
-  //       fetchPiecePosition();
-  //     },);
+    if (!piecePosition || !roomId) return;
 
-  //     return () => clearInterval(interval); // Cleanup khi component unmount
-  //   }
-  // }, [contract, gameStarted]);
+    const fetchData = debounce(async () => {
+      try {
+        await fetchScore(roomId);
+        await fetchBoard(roomId);
+      } catch (error) {
+        console.error("🚨 Lỗi khi fetch dữ liệu:", error);
+      }
+    }, 500);
+
+    fetchData();
+  }, [piecePosition, roomId]);
+
+  useEffect(() => {
+    if (!gameStarted) return;
+  
+    const fetchData = async () => {
+      try {
+        await fetchBoard(roomId);
+        console.log("Game started:", gameStarted);
+      } catch (error) {
+        console.error("🚨 Lỗi khi fetch dữ liệu:", error);
+      }
+    };
+  
+    const debouncedFetch = debounce(fetchData, 500);
+  
+    debouncedFetch(); 
+  
+    return () => {
+      debouncedFetch.cancel();
+    };
+  }, [gameStarted]); 
+  
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const runUpdateLoop = async () => {
+      if (!isMounted) return;
+
+      console.log("Gọi fetchUpdate()");
+      await fetchUpdate(); // Chờ fetchUpdate() hoàn tất
+
+      if (!isMounted) return;
+
+      console.log("Chờ 3 giây trước lần gọi tiếp theo...");
+      timeoutRef.current = setTimeout(runUpdateLoop, 4000); // Chờ 3 giây rồi gọi lại
+    };
+
+    if (contract && gameStarted) {
+      runUpdateLoop(); // Bắt đầu vòng lặp khi đủ điều kiện
+    }
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutRef.current);
+      console.log("Cleanup timeout");
+    };
+  }, [contract, gameStarted]);
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial" }}>
       <h2>Game Blockchain</h2>
+      <input
+        type="text"
+        placeholder="Nhập khóa"
+        value={PRIVATE_KEY}
+        onChange={(e) => setPriveteKey(e.target.value)}
+      />
       {account ? (
         <p>Đã kết nối với: {account}</p>
       ) : (
@@ -567,6 +548,7 @@ const Game = () => {
         {piecePosition.ex}, {piecePosition.ey})
       </p>
       <button onClick={fetchUpdate}>update</button>
+      <button onClick={fetchScore}>score</button>
       <h3>Điểm số của tôi: {score.me} </h3>
       <h3>Điểm số của đối thủ: {score.enemy}</h3>
     </div>
