@@ -1,13 +1,6 @@
 [
 	{
 		"inputs": [],
-		"name": "createRoom",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
 		"stateMutability": "nonpayable",
 		"type": "constructor"
 	},
@@ -24,32 +17,6 @@
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "roomId",
-				"type": "uint256"
-			}
-		],
-		"name": "hardDropPiece",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "roomId",
-				"type": "uint256"
-			}
-		],
-		"name": "joinRoom",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -61,35 +28,6 @@
 		],
 		"name": "LineCleared",
 		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "roomId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "int8",
-				"name": "dx",
-				"type": "int8"
-			},
-			{
-				"internalType": "int8",
-				"name": "dy",
-				"type": "int8"
-			}
-		],
-		"name": "movePiece",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "function"
 	},
 	{
 		"anonymous": false,
@@ -156,58 +94,8 @@
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "roomId",
-				"type": "uint256"
-			}
-		],
-		"name": "rotatePiece",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "roomId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint8",
-				"name": "pieceType",
-				"type": "uint8"
-			}
-		],
-		"name": "selectNextPiece",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "roomId",
-				"type": "uint256"
-			}
-		],
-		"name": "startGame",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "roomId",
-				"type": "uint256"
-			}
-		],
-		"name": "updateGame",
+		"inputs": [],
+		"name": "createRoom",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -384,6 +272,61 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "hardDropPiece",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "joinRoom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "int8",
+				"name": "dx",
+				"type": "int8"
+			},
+			{
+				"internalType": "int8",
+				"name": "dy",
+				"type": "int8"
+			}
+		],
+		"name": "movePiece",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "nextRoomId",
 		"outputs": [
@@ -420,9 +363,71 @@
 				"internalType": "bool",
 				"name": "isActive",
 				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "isStart",
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "rotatePiece",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint8",
+				"name": "pieceType",
+				"type": "uint8"
+			}
+		],
+		"name": "selectNextPiece",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "startGame",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "roomId",
+				"type": "uint256"
+			}
+		],
+		"name": "updateGame",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	}
 ]
