@@ -9,6 +9,7 @@ const RPC_URL = "https://rpc.buildbear.io/sad-doctorstrange-ea8ef310";
 const Game = () => {
   const timeoutRef = useRef(null);
   const [PRIVATE_KEY, setPriveteKey] = useState("");
+  const [winner, setWinner] = useState([]);
   const [tempRoomId, setTempRoomId] = useState("");
   const [account, setAccount] = useState(null);
   const [contract, setContract] = useState(null);
@@ -301,6 +302,36 @@ const Game = () => {
     }
   };
 
+  const fetchWinner = async () => {
+    if (contract && roomId) {
+      try {
+        const result = await contract.getWinner(roomId);
+        if (!result) {
+          console.error("getWinner returned null or undefined");
+          return;
+        }
+        setWinner(result);
+      } catch (error) {
+        console.error("❌ Error fetching getWinner:", error);
+      }
+    }
+  };
+
+  const handleRestartGame = async () => {
+    if (contract && roomId) {
+      try {
+        const tx = await contract.playAgain(roomId);
+        await tx.wait();
+        console.log("Game restarted");
+        setGameStarted(false);
+        setWinner(null);
+        await  fetchBoard();
+      } catch (error) {
+        console.error("�� Error resetting game:", error);
+      }
+    }
+  };
+
   useEffect(() => {
     if (!contract || roomId == null) {
       console.error("Contract or roomId is not defined");
@@ -336,7 +367,7 @@ const Game = () => {
     if (!contract) return;
 
     const onPieceRotated = async (rotation) => {
-        await fetchBoard();
+      await fetchBoard();
       console.log(`♻️ Piece rotated! New rotation: ${rotation}`);
     };
     contract.removeAllListeners("PieceRotated");
@@ -393,7 +424,7 @@ const Game = () => {
       setGameStarted(true);
     };
 
-    const handleGameOver = () => {
+    const handleGameOver = async () => {
       console.log("Game Over!");
       alert("Game Over!");
       setGameStarted(false);
@@ -421,7 +452,6 @@ const Game = () => {
       fetchNextRoomId();
       fetchPieceShape();
       fetchPlayers();
-      console.log("adsf");
     }
   }, [contract]);
 
@@ -432,17 +462,18 @@ const Game = () => {
       try {
         await fetchScore(roomId);
         await fetchBoard(roomId);
+        console.log("🔍 Fetching data...");
       } catch (error) {
         console.error("🚨 Lỗi khi fetch dữ liệu:", error);
       }
-    }, 500);
+    }, 1000);
 
     fetchData();
   }, [piecePosition, roomId]);
 
   useEffect(() => {
     if (!gameStarted) return;
-  
+
     const fetchData = async () => {
       try {
         await fetchBoard(roomId);
@@ -451,16 +482,36 @@ const Game = () => {
         console.error("🚨 Lỗi khi fetch dữ liệu:", error);
       }
     };
-  
+
     const debouncedFetch = debounce(fetchData, 500);
-  
-    debouncedFetch(); 
-  
+
+    debouncedFetch();
+
     return () => {
       debouncedFetch.cancel();
     };
-  }, [gameStarted]); 
-  
+  }, [gameStarted]);
+
+  useEffect(() => {
+    if (gameStarted) return;
+
+    const fetchData = async () => {
+      try {
+        await fetchWinner();
+        console.log("Game over:", gameStarted);
+      } catch (error) {
+        console.error("🚨 Lỗi khi fetch dữ liệu:", error);
+      }
+    };
+
+    const debouncedFetch = debounce(fetchData, 500);
+
+    debouncedFetch();
+
+    return () => {
+      debouncedFetch.cancel();
+    };
+  }, [gameStarted]);
 
   useEffect(() => {
     let isMounted = true;
@@ -487,6 +538,7 @@ const Game = () => {
       console.log("Cleanup timeout");
     };
   }, [contract, gameStarted]);
+
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial" }}>
@@ -551,6 +603,12 @@ const Game = () => {
       <button onClick={fetchScore}>score</button>
       <h3>Điểm số của tôi: {score.me} </h3>
       <h3>Điểm số của đối thủ: {score.enemy}</h3>
+      <div className="game-over-modal">
+        <h2>
+          🎉 {winner ? `Người thắng: ${winner}` : "Trận đấu kết thúc!"} 🎉  
+        </h2>
+        <button onClick={handleRestartGame}>🔄 Chơi lại</button>
+      </div>
     </div>
   );
 };
