@@ -4,7 +4,7 @@
     contract Tetris {
         uint8 constant WIDTH = 8;
         uint8 constant HEIGHT = 8;
-        uint256 dropInterval = 2; // Khoảng thời gian giữa các lần rơi (giây) 
+        uint8 dropInterval = 2; // Khoảng thời gian giữa các lần rơi (giây) 
 
         address owner;
 
@@ -14,7 +14,6 @@
             Piece currentPiece;
             bool isGameOver;
             uint256 lastDropTime;
-            uint256 combo;
             uint256 lastClearTime;
             uint8 nextPieceType;
         }
@@ -46,6 +45,7 @@
         event LineCleared(uint256 newScore);
         event NextPieceSelected(address indexed player, uint8 pieceType);
         event PlayerJoined(uint256 roomId);
+        event GameRestarted(uint256 roomId);
         event GameOver();
 
         constructor() {
@@ -88,7 +88,6 @@
             newPlayer.score = 0;
             newPlayer.isGameOver = false;
             newPlayer.lastDropTime = block.timestamp;
-            newPlayer.combo = 0;
             newPlayer.lastClearTime = 0;
             
             clearBoard(roomId);
@@ -224,6 +223,7 @@
         function movePiece(uint256 roomId, int8 dx, int8 dy) public returns (bool) {
             Player storage player = rooms[roomId].players[msg.sender];
             require(!player.isGameOver, "Game is over");
+            require(rooms[roomId].isStart, "Room dont have started");
 
             uint8 newX = uint8(int8(player.currentPiece.x) + dx);
             uint8 newY = uint8(int8(player.currentPiece.y) + dy);
@@ -251,7 +251,7 @@
             return rotated;
         }
 
-           function rotatePiece(uint256 roomId) public {
+        function rotatePiece(uint256 roomId) public {
             Player storage player = rooms[roomId].players[msg.sender];
             require(!player.isGameOver, "Game is over");
             player.currentPiece.rotation = (player.currentPiece.rotation + 1) % 4;
@@ -592,7 +592,6 @@
         }
 
         function getListPlayer(uint256 roomId) public view returns (address[] memory) {
-            require(rooms[roomId].isActive, "Room does not exist");
             return rooms[roomId].playerAddresses;
         }
 
@@ -659,5 +658,45 @@
                 }
             }
             return activeRooms;
+        }
+
+        function getWinner(uint8 roomId) public view returns (address[] memory) {
+            address[] storage players = rooms[roomId].playerAddresses;
+            require(players.length > 0, "No players in room");
+
+            uint256 highestScore = 0;
+            uint8 winnerCount = 0;
+
+            for (uint8 i = 0; i < players.length; i++) {
+                uint256 playerScore = rooms[roomId].players[players[i]].score;
+                if (playerScore > highestScore) {
+                    highestScore = playerScore;
+                    winnerCount = 1;
+                } else if (playerScore == highestScore) {
+                    winnerCount++;
+                }
+            }
+
+            address[] memory winners = new address[](winnerCount);
+            uint8 index = 0;
+            for (uint8 i = 0; i < players.length; i++) {
+                if (rooms[roomId].players[players[i]].score == highestScore) {
+                    winners[index] = players[i];
+                    index++;
+                }
+            }
+
+            return winners;
+        }
+        function playAgain(uint8 roomId) public {
+            require(!rooms[roomId].isActive, "Room is already active");
+            require(rooms[roomId].playerAddresses.length > 0, "No players in room");
+
+            // Kích hoạt lại phòng chơi
+            rooms[roomId].isActive = true;
+            rooms[roomId].isStart = false;
+            clearBoard(roomId);
+
+            emit GameRestarted(roomId);
         }
     }
